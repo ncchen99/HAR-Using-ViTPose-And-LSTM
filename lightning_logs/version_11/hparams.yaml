@@ -1,0 +1,5 @@
+input_features: 34
+hidden_dim: 50
+learning_rate: 0.0001
+window_size: 292
+tot_action_classes: 10

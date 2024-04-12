@@ -3,7 +3,7 @@ import pandas as pd
 import torch.optim as optim
 import torchmetrics
 import pytorch_lightning as pl
-from src.normalize import normalize_pose_landmarks
+from .normalize import normalize_pose_landmarks
 
 import torch
 import torch.nn as nn
@@ -26,8 +26,6 @@ class PoseDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
 
-openpose_to_detectron_mapping = [0, 1, 28, 29, 26, 27, 32, 33, 30, 31, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 20, 21, 14, 15, 22, 23, 16, 17, 24, 25, 18, 19]
-
 class PoseDataModule(pl.LightningDataModule):
     def __init__(self, data_root, batch_size):
         super().__init__()
@@ -37,33 +35,9 @@ class PoseDataModule(pl.LightningDataModule):
         self.train_info_path = self.data_root + "train_info.csv"
         self.test_data_path = self.data_root + "test_data.csv"
         self.test_info_path = self.data_root + "test_info.csv"
-
-
-    def load_X(self, X_path):
-        file = open(X_path, 'r')
-        X = np.array(
-            [elem for elem in [
-                self.convert_to_detectron_format(row) for row in file
-            ]],
-            dtype=np.float32
-        )
-        file.close()
-        blocks = int(len(X) / WINDOW_SIZE)
-        X_ = np.array(np.split(X, blocks))
-        return X_
-
-    # Load the networks outputs
-    def load_y(self, y_path):
-        file = open(y_path, 'r')
-        y = np.array(
-            [elem for elem in [
-                row.replace('  ', ' ').strip().split(' ') for row in file
-            ]],
-            dtype=np.int32
-        )
-        file.close()
-        # for 0-based indexing
-        return y - 1
+        self.window_size = 0
+        self.tot_action_classes = 0
+        self.load(self.train_data_path, self.train_info_path)
 
     def preprocess_data(self, x, block_sizes):
         # 1. delete the score columns
@@ -76,18 +50,18 @@ class PoseDataModule(pl.LightningDataModule):
         final_x = np.array([]).reshape(0, x.shape[1])
         i_iter = 0
         for block_size in block_sizes:
-            block = np.full((WINDOW_SIZE, x.shape[1]), -10)
+            block = np.full((self.window_size, x.shape[1]), -10)
             for i in range(block_size):
                 block[i] = x[i_iter + i]
             i_iter += block_size
             final_x = np.concatenate((final_x, block), axis=0)
-        
-        return final_x
+        # 5. split the data into blocks
+        blocks = int(len(final_x) / self.window_size)
+        return np.array(np.split(final_x, blocks), dtype=np.float32)
     
     def load(self, data_path, info_path):
-        global TOT_ACTION_CLASSES, WINDOW_SIZE
-        data = pd.read_csv(data_path, sep=',', header=None)
-        info = pd.read_csv(info_path, sep=',')
+        data = pd.read_csv(data_path, sep=',')
+        info = pd.read_csv(info_path, sep=',', header=None)
         y =  []
         # calculate the number of action classes and find the largest block
         block_sizes = []
@@ -99,11 +73,9 @@ class PoseDataModule(pl.LightningDataModule):
                 continue
             block_sizes.append(int(row[1][3]))
             
-        max_block = max(block_sizes + [WINDOW_SIZE])
-        TOT_ACTION_CLASSES = action_classes_num
-        WINDOW_SIZE = max_block
-            
-        # TODO: test if normalize work
+        self.tot_action_classes = action_classes_num
+        self.window_size = max(block_sizes) if self.window_size == 0 else self.window_size
+        # TODO: test if normalize work 2024/4/12: seems work
         x = self.preprocess_data(data.values, block_sizes)
         
         return x, np.array(y) - 1
@@ -134,13 +106,15 @@ class PoseDataModule(pl.LightningDataModule):
             shuffle=False
         )
         return val_loader
-
+    
+    def __getattribute__(self, name: np.str):
+        return super().__getattribute__(name)
 
 
 #lstm classifier definition
 class ActionClassificationLSTM(pl.LightningModule):
     # initialise method
-    def __init__(self, input_features, hidden_dim, learning_rate=0.001):
+    def __init__(self, input_features, hidden_dim, learning_rate=0.001, window_size=32, tot_action_classes=6):
         super().__init__()
         # save hyperparameters
         self.save_hyperparameters()
@@ -149,7 +123,7 @@ class ActionClassificationLSTM(pl.LightningModule):
         # TODO: add mask to ignore padding
         self.lstm = nn.LSTM(input_features, hidden_dim, batch_first=True)
         # The linear layer that maps from hidden state space to classes
-        self.linear = nn.Linear(hidden_dim, TOT_ACTION_CLASSES)
+        self.linear = nn.Linear(hidden_dim, tot_action_classes)
 
     def forward(self, x):
         # invoke lstm layer

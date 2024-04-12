@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from src.data import BodyPart
+from .data import BodyPart
 
 def get_center_point(landmarks, left_bodypart, right_bodypart):
     left = landmarks[:, left_bodypart.value, :]
@@ -28,7 +28,7 @@ def get_pose_size(landmarks, torso_size_multiplier=2.5):
 
 
 def normalize_pose_landmarks(landmarks):
-    landmarks = np.reshape(landmarks, (-1, 17, 2))
+    landmarks = np.reshape(np.nan_to_num(landmarks, copy=False, nan=0, posinf=None, neginf=None), (-1, 17, 2))
     pose_center = get_center_point(landmarks, BodyPart.LEFT_HIP, BodyPart.RIGHT_HIP)
     pose_center = np.expand_dims(pose_center, axis=1)
     pose_center = np.broadcast_to(pose_center, landmarks.shape)

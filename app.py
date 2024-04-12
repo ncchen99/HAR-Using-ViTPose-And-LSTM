@@ -6,7 +6,7 @@ from flask import render_template, Response, request, send_from_directory, flash
 from flask import current_app as app
 from werkzeug.utils import secure_filename
 
-from src.lstm import ActionClassificationLSTM
+from src.lstm_vitpose import ActionClassificationLSTM
 from src.video_analyzer import analyse_video, stream_video
 
 # import some common Detectron2 utilities
@@ -35,8 +35,9 @@ model_load_done = time.time()
 print("Detectron model loaded in ", model_load_done - start)
 
 # Load pretrained LSTM model from checkpoint file
-lstm_classifier = ActionClassificationLSTM.load_from_checkpoint("models/saved_model.ckpt")
+lstm_classifier = ActionClassificationLSTM.load_from_checkpoint("/home/mcnlab/桌面/HAR using LSTM/lightning_logs/version_11/checkpoints/epoch=22-step=22.ckpt")
 # lightning_logs/version_0/checkpoints/epoch=198-step=8954.ckpt
+# models/saved_model.ckpt
 lstm_classifier.eval()
 
 

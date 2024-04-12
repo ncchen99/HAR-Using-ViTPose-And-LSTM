@@ -1,5 +1,5 @@
 # %%
-DATASET_PATH = "./RNN-HAR-2D-Pose-database/"
+DATASET_PATH = "./swenbao_jump_data/"
 
 from argparse import ArgumentParser
 
@@ -19,7 +19,7 @@ from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks import LearningRateMonitor
 
-from src.lstm import ActionClassificationLSTM, PoseDataModule
+from src.lstm_vitpose import ActionClassificationLSTM, PoseDataModule
 
 # %%
 
@@ -31,9 +31,9 @@ def do_training_validation():
     # args = parser.parse_args()
     args, unknown = parser.parse_known_args()
     # init model    
-    model = ActionClassificationLSTM(34, 50, learning_rate=args.learning_rate)
     data_module = PoseDataModule(data_root=args.data_root,
-                                        batch_size=args.batch_size)    
+                                        batch_size=args.batch_size) 
+    model = ActionClassificationLSTM(34, 50, learning_rate=args.learning_rate, window_size=data_module.window_size, tot_action_classes=data_module.tot_action_classes)
     #save only the top 1 model based on val_loss
     checkpoint_callback = ModelCheckpoint(save_top_k=1, monitor='val_loss')
     lr_monitor = LearningRateMonitor(logging_interval='step')  
