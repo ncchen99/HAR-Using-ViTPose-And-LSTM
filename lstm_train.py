@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 def configuration_parser(parent_parser):
     parser = ArgumentParser(parents=[parent_parser], add_help=False)
-    parser.add_argument('--batch_size', type=int, default=512)
+    parser.add_argument('--batch_size', type=int, default=10)
     parser.add_argument('--epochs', type=int, default=400)
     parser.add_argument('--data_root', type=str, default=DATASET_PATH)
     parser.add_argument('--learning_rate', type=float, default=0.0001)
@@ -33,7 +33,7 @@ def do_training_validation():
     # init model    
     data_module = PoseDataModule(data_root=args.data_root,
                                         batch_size=args.batch_size) 
-    model = ActionClassificationLSTM(34, 50, learning_rate=args.learning_rate, window_size=data_module.window_size, tot_action_classes=data_module.tot_action_classes)
+    model = ActionClassificationLSTM(34, 50, learning_rate=args.learning_rate)
     #save only the top 1 model based on val_loss
     checkpoint_callback = ModelCheckpoint(save_top_k=1, monitor='val_loss')
     lr_monitor = LearningRateMonitor(logging_interval='step')  

@@ -8,12 +8,14 @@ from .normalize import normalize_pose_landmarks
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+from torch.nn.utils.rnn import pad_sequence
 import torch.nn.functional as F
+
 
 # We will use dynamic window_size
 WINDOW_SIZE = 32 # ex: 32 frames per block  
 # We have 6 output action classes.
-TOT_ACTION_CLASSES = 0
+TOT_ACTION_CLASSES = 9
 
 class PoseDataset(Dataset):
     def __init__(self, X, Y):
@@ -35,18 +37,21 @@ class PoseDataModule(pl.LightningDataModule):
         self.train_info_path = self.data_root + "train_info.csv"
         self.test_data_path = self.data_root + "test_data.csv"
         self.test_info_path = self.data_root + "test_info.csv"
-        self.window_size = 0
-        self.tot_action_classes = 0
         self.load(self.train_data_path, self.train_info_path)
 
     def preprocess_data(self, x, block_sizes):
+
         # 1. delete the score columns
         x = np.delete(x, slice(2, None, 3), 1)
         # 2. nomalize the data
         x = normalize_pose_landmarks(x)
         # 3. convert all NAN to -10
         x = np.nan_to_num(x, copy=False, nan=-10, posinf=None, neginf=None)
-        # 4. fill the blocks with padding
+        # 4. convert to numpy float array
+        x = x.astype(np.float32)
+        # 5. fill the blocks with padding
+        # we will process using collete_fn
+        ''' handmade solution
         final_x = np.array([]).reshape(0, x.shape[1])
         i_iter = 0
         for block_size in block_sizes:
@@ -57,9 +62,15 @@ class PoseDataModule(pl.LightningDataModule):
             final_x = np.concatenate((final_x, block), axis=0)
         # 5. split the data into blocks
         blocks = int(len(final_x) / self.window_size)
-        return np.array(np.split(final_x, blocks), dtype=np.float32)
+        np.split(final_x, blocks)
+        '''
+        # 6. split the data into blocks
+        x = np.split(x, np.cumsum(block_sizes))
+        
+        return x
     
     def load(self, data_path, info_path):
+        global WINDOW_SIZE
         data = pd.read_csv(data_path, sep=',')
         info = pd.read_csv(info_path, sep=',', header=None)
         y =  []
@@ -73,12 +84,25 @@ class PoseDataModule(pl.LightningDataModule):
                 continue
             block_sizes.append(int(row[1][3]))
             
-        self.tot_action_classes = action_classes_num
-        self.window_size = max(block_sizes) if self.window_size == 0 else self.window_size
+        if TOT_ACTION_CLASSES != action_classes_num:
+            raise ValueError("The number of action classes is not equal to the number of classes in the data")
+        WINDOW_SIZE = max(block_sizes) if WINDOW_SIZE == 0 else WINDOW_SIZE
         # TODO: test if normalize work 2024/4/12: seems work
         x = self.preprocess_data(data.values, block_sizes)
-        
         return x, np.array(y) - 1
+    
+    def collate_fn(self, batch):
+        # batch 是一個列表，其中包含了**所有** `__getitem__` 的輸出
+        # 我們需要對這些輸出應用 pad_sequence
+
+        (x, y) = zip(*batch)
+        x = [torch.tensor(i, dtype=torch.float) for i in x]
+        y = torch.tensor(y, dtype=torch.long)
+        x_lens = [len(x) for x in x]
+        x_pad = pad_sequence(x, batch_first=True, padding_value=-10)
+
+        return x_pad, y, x_lens
+    
     def prepare_data(self):
         pass
 
@@ -94,7 +118,8 @@ class PoseDataModule(pl.LightningDataModule):
         train_loader = DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            shuffle=True
+            shuffle=True,
+            collate_fn=self.collate_fn
         )
         return train_loader
 
@@ -103,7 +128,8 @@ class PoseDataModule(pl.LightningDataModule):
         val_loader = DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
-            shuffle=False
+            shuffle=False,
+            collate_fn=self.collate_fn
         )
         return val_loader
     
@@ -114,7 +140,7 @@ class PoseDataModule(pl.LightningDataModule):
 #lstm classifier definition
 class ActionClassificationLSTM(pl.LightningModule):
     # initialise method
-    def __init__(self, input_features, hidden_dim, learning_rate=0.001, window_size=32, tot_action_classes=6):
+    def __init__(self, input_features, hidden_dim, learning_rate=0.001):
         super().__init__()
         # save hyperparameters
         self.save_hyperparameters()
@@ -123,7 +149,7 @@ class ActionClassificationLSTM(pl.LightningModule):
         # TODO: add mask to ignore padding
         self.lstm = nn.LSTM(input_features, hidden_dim, batch_first=True)
         # The linear layer that maps from hidden state space to classes
-        self.linear = nn.Linear(hidden_dim, tot_action_classes)
+        self.linear = nn.Linear(hidden_dim, TOT_ACTION_CLASSES)
 
     def forward(self, x):
         # invoke lstm layer
@@ -133,11 +159,13 @@ class ActionClassificationLSTM(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # get data and labels from batch
-        x, y = batch
+        x, y, x_lens = batch
+        # x = torch.unsqueeze(x, dim=2)           
+        x = torch.nn.utils.rnn.pack_padded_sequence(x, x_lens, batch_first=True, enforce_sorted=False)
         # reduce dimension
-        y = torch.squeeze(y)
+        # y = torch.squeeze(y)
         # convert to long
-        y = y.long()
+        # y = y.long()
         # get prediction
         y_pred = self(x)
         # calculate loss
@@ -169,11 +197,13 @@ class ActionClassificationLSTM(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # get data and labels from batch
-        x, y = batch
+        x, y, x_lens = batch
+        # x = torch.unsqueeze(x, dim=2)           
+        x = torch.nn.utils.rnn.pack_padded_sequence(x, x_lens, batch_first=True, enforce_sorted=False)
         # reduce dimension
-        y = torch.squeeze(y)
+        # y = torch.squeeze(y)
         # convert to long
-        y = y.long()
+        # y = y.long()
         # get prediction
         y_pred = self(x)
         # calculate loss
