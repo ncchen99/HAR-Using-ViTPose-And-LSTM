@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 LABELS = None
 with open("./src/labels.yaml", "r") as stream:
-    LABELS = yaml.load(stream)
+    LABELS = yaml.load(stream, Loader=yaml.FullLoader)
 
 
 # how many frames to skip while inferencing

@@ -5,8 +5,8 @@ from argparse import ArgumentParser
 
 def configuration_parser(parent_parser):
     parser = ArgumentParser(parents=[parent_parser], add_help=False)
-    parser.add_argument('--batch_size', type=int, default=1)
-    parser.add_argument('--epochs', type=int, default=1000)
+    parser.add_argument('--batch_size', type=int, default=512)
+    parser.add_argument('--epochs', type=int, default=600)
     parser.add_argument('--data_root', type=str, default=DATASET_PATH)
     parser.add_argument('--learning_rate', type=float, default=0.0001)
     parser.add_argument('--num_class', type=int, default=6)
