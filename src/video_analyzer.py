@@ -1,21 +1,18 @@
 import cv2
 import ntpath
 from .utils import filter_persons, draw_keypoints
-from .lstm import WINDOW_SIZE
+from .lstm_vitpose import WINDOW_SIZE
 import time
+import yaml
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 
-LABELS = {
-    0: "JUMPING",
-    1: "JUMPING_JACKS",
-    2: "BOXING",
-    3: "WAVING_2HANDS",
-    4: "WAVING_1HAND",
-    5: "CLAPPING_HANDS"
-}
+LABELS = None
+with open("./src/labels.yaml", "r") as stream:
+    LABELS = yaml.load(stream)
+
 
 # how many frames to skip while inferencing
 # configuring a higher value will result in better FPS (frames per rate), but accuracy might get impacted

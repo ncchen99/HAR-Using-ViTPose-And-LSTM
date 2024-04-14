@@ -13,7 +13,7 @@ import torch.nn.functional as F
 
 
 # We will use dynamic window_size
-WINDOW_SIZE = 32 # ex: 32 frames per block  
+WINDOW_SIZE = 60 # ex: 60 frames per block  
 # We have 6 output action classes.
 TOT_ACTION_CLASSES = 9
 
