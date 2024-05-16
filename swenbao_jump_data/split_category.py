@@ -46,12 +46,11 @@ def read_yaml(file_path):
         return yaml.safe_load(file)
 
 # 分割 data.csv 並儲存成不同的檔案
-def split_and_save_data(info, data, headers, binary_category, output_dir="output"):
+def split_and_save_data(info, data, headers, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     index = 0
     for category_info in info:
         # category_info = next((cat for cat in info if cat["name"] == category), None)
-        print(category_info)
         output_file_path = os.path.join(output_dir, f"{category_info['name']}.csv")
         with open(output_file_path, mode='w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -61,7 +60,7 @@ def split_and_save_data(info, data, headers, binary_category, output_dir="output
                     writer.writerow(row)
                 index += int(file_info["frames"])
 
-def combine_data(info, binary_category, output_dir="output"):
+def combine_data(info, binary_category, output_dir):
     for key, categories in binary_category.items():
         # merging two csv files 
         df = pd.concat( 
@@ -74,10 +73,10 @@ def combine_data(info, binary_category, output_dir="output"):
                 
 # 主函式
 def main():
-    info_file_path = "train_info.csv"
-    data_file_path = "train_data.csv"
+    info_file_path = "test_info.csv"
+    data_file_path = "test_data.csv"
     yaml_file_path = "binary_category.yaml"
-    output_dir = "output"
+    output_dir = "output_test"
 
     info = read_info_csv(info_file_path)
     headers, data = read_data_csv(data_file_path)
@@ -85,6 +84,7 @@ def main():
 
     split_and_save_data(info, data, headers, output_dir)
     combine_data(info, binary_category, output_dir)
+    
 if __name__ == "__main__":
     main()
 
