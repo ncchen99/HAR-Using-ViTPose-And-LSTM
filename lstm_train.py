@@ -1,11 +1,11 @@
 # %%
-DATASET_PATH = "./swenbao_jump_data/"
+DATASET_PATH = "./swenbao_jump_data_angle/"
 
 from argparse import ArgumentParser
 
 def configuration_parser(parent_parser):
     parser = ArgumentParser(parents=[parent_parser], add_help=False)
-    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=512)
     parser.add_argument('--epochs', type=int, default=1000)
     parser.add_argument('--data_root', type=str, default=DATASET_PATH)
     parser.add_argument('--learning_rate', type=float, default=0.0001)
@@ -33,7 +33,7 @@ def do_training_validation():
     # init model    
     data_module = PoseDataModule(data_root=args.data_root,
                                         batch_size=args.batch_size) 
-    model = ActionClassificationLSTM(34, 50, learning_rate=args.learning_rate)
+    model = ActionClassificationLSTM(24, 50, learning_rate=args.learning_rate)
     #save only the top 1 model based on val_loss
     checkpoint_callback = ModelCheckpoint(save_top_k=1, monitor='val_loss')
     lr_monitor = LearningRateMonitor(logging_interval='step')  

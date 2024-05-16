@@ -43,9 +43,9 @@ class PoseDataModule(pl.LightningDataModule):
     def preprocess_data(self, x, block_sizes):
 
         # 1. delete the score columns
-        x = np.delete(x, slice(2, None, 3), 1)
+        # x = np.delete(x, slice(2, None, 3), 1)
         # 2. nomalize the data
-        x = normalize_pose_landmarks(x)
+        # x = normalize_pose_landmarks(x)
         # 3. convert all NAN to -10
         x = np.nan_to_num(x, copy=False, nan=-10, posinf=None, neginf=None)
         # 4. convert to numpy float array
