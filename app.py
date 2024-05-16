@@ -35,7 +35,7 @@ model_load_done = time.time()
 print("Detectron model loaded in ", model_load_done - start)
 
 # Load pretrained LSTM model from checkpoint file
-lstm_classifier = ActionClassificationLSTM.load_from_checkpoint("/home/mcnlab/桌面/HAR using LSTM/lightning_logs/version_45/checkpoints/epoch=145-step=145.ckpt")
+lstm_classifier = ActionClassificationLSTM.load_from_checkpoint("/home/mcnlab/桌面/HAR using LSTM/lightning_logs/version_56/checkpoints/epoch=27-step=5907.ckpt")
 # lightning_logs/version_0/checkpoints/epoch=198-step=8954.ckpt
 # models/saved_model.ckpt
 lstm_classifier.eval()

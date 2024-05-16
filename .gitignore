@@ -1,1 +1,3 @@
 RNN-HAR-2D-Pose-database/
+# Too much storage, so I will only upload the code and the trained model
+*.mp4

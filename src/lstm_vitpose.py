@@ -3,6 +3,7 @@ import pandas as pd
 import torch.optim as optim
 import torchmetrics
 import pytorch_lightning as pl
+import yaml
 from .normalize import normalize_pose_landmarks
 
 import torch
@@ -13,9 +14,9 @@ import torch.nn.functional as F
 
 
 # We will use dynamic window_size
-WINDOW_SIZE = 60 # ex: 60 frames per block  
+WINDOW_SIZE = 30 # ex: 30 frames per block  
 # We have 6 output action classes.
-TOT_ACTION_CLASSES = 9
+TOT_ACTION_CLASSES = 8
 
 class PoseDataset(Dataset):
     def __init__(self, X, Y):
@@ -70,6 +71,7 @@ class PoseDataModule(pl.LightningDataModule):
         return x
     
     def load(self, data_path, info_path):
+        
         global WINDOW_SIZE
         data = pd.read_csv(data_path, sep=',')
         info = pd.read_csv(info_path, sep=',', header=None)
@@ -77,13 +79,22 @@ class PoseDataModule(pl.LightningDataModule):
         # calculate the number of action classes and find the largest block
         block_sizes = []
         action_classes_num = 0
+        data_dict = {}
         for row in info.iterrows():
             if pd.isna(row[1][3]):
+                data_dict[row[1][1]-1] = row[1][0]
                 y += [row[1][1]] * row[1][2]
                 action_classes_num += 1
                 continue
             block_sizes.append(int(row[1][3]))
-            
+        
+        # Convert the dictionary to YAML format
+        yaml_output = yaml.dump(data_dict, default_flow_style=False)
+
+        # Write the YAML output to a file
+        with open('src/labels.yaml', 'w') as yamlfile:
+            yamlfile.write(yaml_output)
+
         if TOT_ACTION_CLASSES != action_classes_num:
             raise ValueError("The number of action classes is not equal to the number of classes in the data")
         WINDOW_SIZE = max(block_sizes) if WINDOW_SIZE == 0 else WINDOW_SIZE
