@@ -1,4 +1,4 @@
-jumpUPorForward,12,44,
+jumpUPorForward,0,44,
 1-Left.mp4,1920,1080,50
 10-Left.mp4,1920,1080,50
 11-Left.mp4,1920,1080,49
@@ -43,7 +43,7 @@ jumpUPorForward,12,44,
 82-Left.mp4,1920,1080,50
 89-Right.mp4,1080,1914,49
 9-Left.mp4,1920,1080,47
-jumpBack,11,5,
+jumpBack,1,5,
 16-Right.mp4,1280,720,45
 19-Right.mp4,1280,720,48
 20-Left.mp4,1920,1080,45

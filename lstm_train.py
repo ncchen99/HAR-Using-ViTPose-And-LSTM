@@ -23,7 +23,9 @@ from src.lstm_vitpose import ActionClassificationLSTM, PoseDataModule
 
 # %%
 
-def do_training_validation():
+
+
+def do_training_validation(datapath):
     pl.seed_everything(21)    
     parser = ArgumentParser()
     parser = pl.Trainer.add_argparse_args(parser)
@@ -32,7 +34,7 @@ def do_training_validation():
     args, unknown = parser.parse_known_args()
     # init model    
     data_module = PoseDataModule(data_root=args.data_root,
-                                        batch_size=args.batch_size) 
+                                        batch_size=args.batch_size, datapath=datapath) 
     model = ActionClassificationLSTM(34, 50, learning_rate=args.learning_rate)
     #save only the top 1 model based on val_loss
     checkpoint_callback = ModelCheckpoint(save_top_k=1, monitor='val_loss')
@@ -55,12 +57,6 @@ def do_training_validation():
 # logs folder path
 %tensorboard --logdir=lightning_logs
 """
-
-
-# %%
-
-do_training_validation()
-
 import os
 def get_latest_run_version_ckpt_epoch_no(lightning_logs_dir='lightning_logs', run_version=None):
     if run_version is None:
@@ -84,5 +80,19 @@ def get_latest_run_version_ckpt_epoch_no(lightning_logs_dir='lightning_logs', ru
 
 # %%
 
-ckpt_path = get_latest_run_version_ckpt_epoch_no()
-print('The latest model path: {}'.format(ckpt_path))
+
+
+for i in range(0, 7):
+    datapath = {
+        "train_data": f"{DATASET_PATH}output_train/data_{i}.csv",
+        "train_info": f"{DATASET_PATH}output_train/info_{i}.csv",
+        "test_data": f"{DATASET_PATH}output_test/data_{i}.csv",
+        "test_info": f"{DATASET_PATH}output_test/info_{i}.csv",
+    }
+    do_training_validation(datapath)
+    ckpt_path = get_latest_run_version_ckpt_epoch_no()
+    print('The latest model path: {}'.format(ckpt_path))
+
+
+# %%
+

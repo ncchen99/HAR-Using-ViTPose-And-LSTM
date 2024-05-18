@@ -16,7 +16,7 @@ import torch.nn.functional as F
 # We will use dynamic window_size
 WINDOW_SIZE = 30 # ex: 30 frames per block  
 # We have 6 output action classes.
-TOT_ACTION_CLASSES = 8
+TOT_ACTION_CLASSES = 2
 
 class PoseDataset(Dataset):
     def __init__(self, X, Y):
@@ -30,15 +30,15 @@ class PoseDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 class PoseDataModule(pl.LightningDataModule):
-    def __init__(self, data_root, batch_size):
+    def __init__(self, data_root, batch_size, datapath):
         super().__init__()
         self.data_root = data_root
         self.batch_size = batch_size
-        self.train_data_path = self.data_root + "train_data.csv"
-        self.train_info_path = self.data_root + "train_info.csv"
-        self.test_data_path = self.data_root + "test_data.csv"
-        self.test_info_path = self.data_root + "test_info.csv"
-        self.load(self.train_data_path, self.train_info_path)
+        self.train_data_path = datapath["train_data"]
+        self.train_info_path = datapath["train_info"]
+        self.test_data_path = datapath["test_data"]
+        self.test_info_path = datapath["test_info"]
+        # self.load(self.train_data_path, self.train_info_path)
 
     def preprocess_data(self, x, block_sizes):
 
@@ -82,8 +82,8 @@ class PoseDataModule(pl.LightningDataModule):
         data_dict = {}
         for row in info.iterrows():
             if pd.isna(row[1][3]):
-                data_dict[row[1][1]-1] = row[1][0]
-                y += [row[1][1]] * row[1][2]
+                data_dict[row[1][1]] = row[1][0]
+                y += [row[1][1]+1] * row[1][2]
                 action_classes_num += 1
                 continue
             block_sizes.append(int(row[1][3]))

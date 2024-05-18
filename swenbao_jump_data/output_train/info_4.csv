@@ -1,4 +1,4 @@
-fullyJump,9,24,
+fullyJump,0,24,
 10-Left.mp4,1920,1080,50
 11-Left.mp4,1920,1080,49
 12-Left.mp4,1920,1080,51
@@ -23,7 +23,7 @@ fullyJump,9,24,
 81-Left.mp4,1920,1080,44
 89-Right.mp4,1080,1914,49
 9-Left.mp4,1920,1080,47
-notFullyJump,13,26,
+notFullyJump,1,26,
 17-Right.mp4,1920,1080,62
 19-Right.mp4,1280,720,48
 21-Left.mp4,1920,1080,54

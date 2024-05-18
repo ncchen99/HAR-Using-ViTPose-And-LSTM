@@ -4,7 +4,9 @@ import os
 import pandas as pd 
 
 # 讀取 info.csv
-def read_info_csv(file_path):
+def read_info_csv(file_path, binary_category):
+    binary_category = [categories for key, categories in binary_category.items()]
+    
     with open(file_path, newline='') as csvfile:
         reader = csv.reader(csvfile)
         info = []
@@ -13,12 +15,16 @@ def read_info_csv(file_path):
             if len(row) == 4 and not row[3]:  # new category header
                 if category:
                     info.append(category)
+                id = row[1]
+                for i, rrow in enumerate(binary_category):
+                    if row[0] in rrow:
+                        id = rrow.index(row[0])
                 category = {
                     "name": row[0],
                     "id": row[1],
                     "count": int(row[2]),
                     "files": [],
-                    "text": [row]
+                    "text": [[row[0], id, row[2], ""]]
                 }
             else:  # file entry
                 category["files"].append({
@@ -73,14 +79,15 @@ def combine_data(info, binary_category, output_dir):
                 
 # 主函式
 def main():
-    info_file_path = "test_info.csv"
-    data_file_path = "test_data.csv"
+    info_file_path = "train_info.csv"
+    data_file_path = "train_data.csv"
     yaml_file_path = "binary_category.yaml"
-    output_dir = "output_test"
+    output_dir = "output_train"
 
-    info = read_info_csv(info_file_path)
-    headers, data = read_data_csv(data_file_path)
     binary_category = read_yaml(yaml_file_path)
+    info = read_info_csv(info_file_path, binary_category)
+    headers, data = read_data_csv(data_file_path)
+    
 
     split_and_save_data(info, data, headers, output_dir)
     combine_data(info, binary_category, output_dir)
