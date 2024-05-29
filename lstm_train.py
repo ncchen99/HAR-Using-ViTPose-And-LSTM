@@ -5,11 +5,11 @@ from argparse import ArgumentParser
 
 def configuration_parser(parent_parser):
     parser = ArgumentParser(parents=[parent_parser], add_help=False)
-    parser.add_argument('--batch_size', type=int, default=1)
-    parser.add_argument('--epochs', type=int, default=1000)
+    parser.add_argument('--batch_size', type=int, default=10)
+    parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--data_root', type=str, default=DATASET_PATH)
     parser.add_argument('--learning_rate', type=float, default=0.0001)
-    parser.add_argument('--num_class', type=int, default=8)
+    parser.add_argument('--num_class', type=int, default=2)
     return parser
 
 # %%
@@ -84,10 +84,10 @@ def get_latest_run_version_ckpt_epoch_no(lightning_logs_dir='lightning_logs', ru
 
 for i in range(0, 7):
     datapath = {
-        "train_data": f"{DATASET_PATH}output_train/data_{i}.csv",
-        "train_info": f"{DATASET_PATH}output_train/info_{i}.csv",
-        "test_data": f"{DATASET_PATH}output_test/data_{i}.csv",
-        "test_info": f"{DATASET_PATH}output_test/info_{i}.csv",
+        "train_data": f"{DATASET_PATH}train/data_{i}.csv",
+        "train_info": f"{DATASET_PATH}train/info_{i}.csv",
+        "test_data": f"{DATASET_PATH}test/data_{i}.csv",
+        "test_info": f"{DATASET_PATH}test/info_{i}.csv",
     }
     do_training_validation(datapath)
     ckpt_path = get_latest_run_version_ckpt_epoch_no()

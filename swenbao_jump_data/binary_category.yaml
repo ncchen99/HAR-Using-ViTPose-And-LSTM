@@ -1,21 +1,21 @@
 0:
-  - ProperSquat
-  - squatTooLow
+  - 0+
+  - 0-
 1: 
-  - squatLeanForward
-  - squatNotLean
+  - 1+
+  - 1-
 2:
-  - armHigh
-  - armLow
+  - 2+
+  - 2-
 3:
-  - jumpUPorForward
-  - jumpBack
+  - 3+
+  - 3-
 4:
-  - fullyJump
-  - notFullyJump
+  - 4+
+  - 4-
 5:
-  - ProperSpot
-  - headBack
+  - 5+
+  - 5-
 6:
-  - ProperTuck
-  - ImproperTuck
+  - 6+
+  - 6-
