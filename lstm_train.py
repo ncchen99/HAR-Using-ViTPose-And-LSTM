@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 def configuration_parser(parent_parser):
     parser = ArgumentParser(parents=[parent_parser], add_help=False)
     parser.add_argument('--batch_size', type=int, default=10)
-    parser.add_argument('--epochs', type=int, default=200)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--data_root', type=str, default=DATASET_PATH)
     parser.add_argument('--learning_rate', type=float, default=0.0001)
     parser.add_argument('--num_class', type=int, default=2)
@@ -38,7 +38,7 @@ def do_training_validation(datapath):
     model = ActionClassificationLSTM(34, 50, learning_rate=args.learning_rate)
     #save only the top 1 model based on val_loss
     checkpoint_callback = ModelCheckpoint(save_top_k=1, monitor='val_loss')
-    lr_monitor = LearningRateMonitor(logging_interval='step')  
+    lr_monitor = LearningRateMonitor(logging_interval=None)  
     #trainer
     trainer = pl.Trainer.from_argparse_args(args,
         # fast_dev_run=True,

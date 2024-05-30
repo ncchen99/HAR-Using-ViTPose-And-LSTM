@@ -245,7 +245,7 @@ class ActionClassificationLSTM(pl.LightningModule):
         # log the metrics for pytorch lightning progress bar and any further processing
         self.log('val_loss', avg_val_loss, prog_bar=True)
         self.log('val_acc', avg_val_acc, prog_bar=True)
-
+        
     def configure_optimizers(self):
         # adam optimiser
         optimizer = optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
