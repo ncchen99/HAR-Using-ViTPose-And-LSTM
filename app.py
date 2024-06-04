@@ -6,13 +6,10 @@ from flask import render_template, Response, request, send_from_directory, flash
 from flask import current_app as app
 from werkzeug.utils import secure_filename
 
-from src.lstm_vitpose import ActionClassificationLSTM
-from src.video_analyzer import analyse_video, stream_video
+start = time.time()
 
-# import some common Detectron2 utilities
-from detectron2 import model_zoo
-from detectron2.engine import DefaultPredictor
-from detectron2.config import get_cfg
+from src.lstm import ActionClassificationLSTM
+from src.video_analyzer import analyse_video, stream_video
 
 app = Flask(__name__)
 UPLOAD_FOLDER = './'
@@ -20,24 +17,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = "secret key"
 
 
-start = time.time()
-# obtain detectron2's default config
-cfg = get_cfg()
-# load the pre trained model from Detectron2 model zoo
-cfg.merge_from_file(model_zoo.get_config_file("COCO-Keypoints/keypoint_rcnn_R_50_FPN_3x.yaml"))
-# set confidence threshold for this model
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
-# load model weights
-cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Keypoints/keypoint_rcnn_R_50_FPN_3x.yaml")
-# create the predictor for pose estimation using the config
-pose_detector = DefaultPredictor(cfg)
+
 model_load_done = time.time()
-print("Detectron model loaded in ", model_load_done - start)
+print("Vitpose model loaded in ", model_load_done - start)
 
 # Load pretrained LSTM model from checkpoint file
-lstm_classifier = ActionClassificationLSTM.load_from_checkpoint("/home/mcnlab/桌面/HAR using LSTM/lightning_logs/version_56/checkpoints/epoch=27-step=5907.ckpt")
-# lightning_logs/version_0/checkpoints/epoch=198-step=8954.ckpt
-# models/saved_model.ckpt
+lstm_classifier = ActionClassificationLSTM.load_from_checkpoint("/home/mcnlab/桌面/VitPose/HAR_ViTPose_demo/models/saved_model.ckpt")
 lstm_classifier.eval()
 
 
@@ -122,8 +107,9 @@ def get_result_video(filename):
 @app.route('/analyze/<filename>')
 def analyze(filename):
     # invokes method analyse_video
-    return Response(analyse_video(pose_detector, lstm_classifier, filename), mimetype='text/event-stream')
+    return Response(analyse_video(lstm_classifier, filename), mimetype='text/event-stream')
 
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=True)
+    app.run()
+#debug=True, use_reloader=True
