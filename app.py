@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 start = time.time()
 
-from src.lstm import ActionClassificationLSTM
+from src.lstm_vitpose import ActionClassificationLSTM
 from src.video_analyzer import analyse_video, stream_video
 
 app = Flask(__name__)
@@ -16,15 +16,16 @@ UPLOAD_FOLDER = './'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = "secret key"
 
-model_load_done = time.time()
 
-print("Vitpose model loaded in ", model_load_done - start)
 
 checkpoint_paths = [
-    "models/saved_model.ckpt",
-    # "models/vit_large_patch16_224.pth",
-    # "models/vit_base_patch32_224.pth"
-    # ...
+    "models/0.ckpt",
+    "models/1.ckpt",
+    "models/2.ckpt",
+    "models/3.ckpt",
+    "models/4.ckpt",
+    "models/5.ckpt",
+    "models/6.ckpt"
 ]
 
 class_names = [
@@ -35,12 +36,16 @@ class_names = [
 lstm_classifiers = [ActionClassificationLSTM.load_from_checkpoint(checkpoint_path) for checkpoint_path in checkpoint_paths]
 lstm_classifiers = [lstm_classifier.eval() for lstm_classifier in lstm_classifiers]
 
+model_load_done = time.time()
+
+print("Vitpose and LSTM model loaded in ", model_load_done - start)
+
 class DataObject():
     pass
 
 
 def checkFileType(f: str):
-    return f.split('.')[-1] in ['mp4']
+    return f.split('.')[-1].lower() in ['mp4', 'avi', 'mov', 'mkv']
 
 
 def cleanString(v: str):

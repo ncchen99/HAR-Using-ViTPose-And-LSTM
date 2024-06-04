@@ -28,15 +28,6 @@ except (ImportError, ModuleNotFoundError):
 
 assert has_mmdet, 'Please install mmdet to run the demo.'
 
-LABELS = {
-    0: "JUMPING",
-    1: "JUMPING_JACKS",
-    2: "BOXING",
-    3: "WAVING_2HANDS",
-    4: "WAVING_1HAND",
-    5: "CLAPPING_HANDS"
-}
-
 # how many frames to skip while inferencing
 # configuring a higher value will result in better FPS (frames per rate), but accuracy might get impacted
 SKIP_FRAME_COUNT = 0
@@ -158,9 +149,9 @@ def analyse_video(lstm_classifiers, video_path, class_names):
     analyze_done = time.time()
     print("Video processing finished in ", analyze_done - start)
     
-    # filled_result=colab_find_bounce_up.fill_ankle(result[33])
-    # jumpend=algo.find_inflection(filled_result)
-    # result=filled_result[jumpend-49:jumpend+1][:]
+    filled_result=colab_find_bounce_up.fill_ankle(result[33])
+    jumpend=algo.find_inflection(filled_result)
+    result=filled_result[jumpend-10:jumpend+1][:]
 
     result_text = ""
 
@@ -180,7 +171,7 @@ def analyse_video(lstm_classifiers, video_path, class_names):
         if pred_index.numpy()[0] == 1:
             result_text += class_names[i] + " "
     
-    yield f"data: {{ \"percentage\":\"100\", \"result\": \"{result_text if result_text != "" else "做的很好！"}\"}}\n\n"
+    yield f"data: {{ \"percentage\":\"100\", \"result\": \"{result_text if result_text != '' else '做的很好！'}\"}}\n\n"
 
 
 
