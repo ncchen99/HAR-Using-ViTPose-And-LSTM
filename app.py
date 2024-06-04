@@ -16,15 +16,24 @@ UPLOAD_FOLDER = './'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = "secret key"
 
-
-
 model_load_done = time.time()
+
 print("Vitpose model loaded in ", model_load_done - start)
 
-# Load pretrained LSTM model from checkpoint file
-lstm_classifier = ActionClassificationLSTM.load_from_checkpoint("/home/mcnlab/桌面/VitPose/HAR_ViTPose_demo/models/saved_model.ckpt")
-lstm_classifier.eval()
+checkpoint_paths = [
+    "models/saved_model.ckpt",
+    # "models/vit_large_patch16_224.pth",
+    # "models/vit_base_patch32_224.pth"
+    # ...
+]
 
+class_names = [
+    "蹲太低", "身體太過前傾", "擺手太低", "向後跳", "起跳不完全", "你向後甩頭了", "團身不夠緊"
+]
+
+# Load pretrained LSTM model from checkpoint file
+lstm_classifiers = [ActionClassificationLSTM.load_from_checkpoint(checkpoint_path) for checkpoint_path in checkpoint_paths]
+lstm_classifiers = [lstm_classifier.eval() for lstm_classifier in lstm_classifiers]
 
 class DataObject():
     pass
@@ -107,7 +116,7 @@ def get_result_video(filename):
 @app.route('/analyze/<filename>')
 def analyze(filename):
     # invokes method analyse_video
-    return Response(analyse_video(lstm_classifier, filename), mimetype='text/event-stream')
+    return Response(analyse_video(lstm_classifiers, filename, class_names), mimetype='text/event-stream')
 
 
 if __name__ == '__main__':
