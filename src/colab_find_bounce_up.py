@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.signal import butter, filtfilt
-from src.algo import find_inflection
+
 
 
 def fill_ankle( y_cord_list):

@@ -10,24 +10,38 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <style>
+    video {
+      width: 320px;
+      object-fit: fill;
+    }
+
     .bg-1 {
-      background-color: #1abc9c;
+      background-color: #FEF5E7;
       /* Green */
-      color: #ffffff;
+      color: #212020;
     }
 
     .container-fluid {
       padding-top: 70px;
       padding-bottom: 70px;
     }
+    .pt-50 {
+      padding-top: 50px;
+    }
+    .pt-30 {
+      padding-top: 30px;
+    }
+    .pt-40 {
+      padding-top: 40px;
+    }
   </style>
 </head>
 
-<body>
-
-  <div class="container-fluid bg-1 text-center">
-    <h3>Let's do backflip action classification</h3>
-
+<body class="bg-1">
+  <div class="text-center pt-50">
+    <h2>Backflip action classification</h2>
+  </div>
+  <div class="container pt-30">
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     {% for message in messages %}
@@ -65,7 +79,7 @@
     </script>
     <div>
       Input video <br />
-      <video width="480" height="320" controls>
+      <video controls>
         <source src={{ url_for('get_file', filename=obj.video) }} alt="User Video" type="video/mp4">
         Your browser does not support the video tag.
       </video>
@@ -88,35 +102,31 @@
 
     </div>
     {% else %}
-    <table class="table">
-      <tr>
-        <td>
-          <form method=POST enctype=multipart/form-data action="{{ url_for('upload') }}">
-            <div class="custom-file">
-              <input type="file" class="custom-file-input" name="video" id="video" accept=".mp4">
-              <label class="custom-file-label" for="video">Choose video to analyse</label>
-            </div>
-            <div class="mt-3">
-              <button type="submit" class="btn btn-primary">Submit</button>
-            </div>
-          </form>
-        </td>
-        <td>
-          OR
-        </td>
-        <td>
-          <form method=POST enctype=multipart/form-data action="{{ url_for('sample') }}">
-            <video width="480" height="320" controls>
-              <source src={{ url_for('get_file', filename=obj.video) }} alt="User Video" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>
-            <div class="mt-3">
-              <button type="submit" class="btn btn-primary">Submit</button>
-            </div>
-          </form>
-        </td>
-      </tr>
-    </table>
+    <div class="row">
+
+      <div class="col pt-40">
+        <form method=POST enctype=multipart/form-data action="{{ url_for('upload') }}">
+          <div class="custom-file">
+            <input type="file" class="custom-file-input" name="video" id="video" accept=".mp4">
+            <label class="custom-file-label" for="video">Choose video to analyse</label>
+          </div>
+          <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </form>
+      </div>
+      <div class="col pt-30 ">
+        <form method=POST enctype=multipart/form-data action="{{ url_for('sample') }}">
+          <video  controls>
+            <source src={{ url_for('get_file', filename=obj.video) }} alt="User Video" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
     {% endif %}
   </div>
 

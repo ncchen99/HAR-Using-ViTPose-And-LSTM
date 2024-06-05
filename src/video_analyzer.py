@@ -2,8 +2,7 @@ import os
 import time
 import cv2
 import ntpath
-from src.colab_find_bounce_up import fill_ankle
-from src.algo import find_inflection
+
 
 from lib.config import Config
 from lib.tools import verify_video, convert_video, get_video_info
@@ -149,9 +148,9 @@ def analyse_video(lstm_classifiers, video_path, class_names):
     analyze_done = time.time()
     print("Video processing finished in ", analyze_done - start)
     
-    filled_result=colab_find_bounce_up.fill_ankle(result[33])
+    '''filled_result=colab_find_bounce_up.fill_ankle(result[33])
     jumpend=algo.find_inflection(filled_result)
-    result=filled_result[jumpend-10:jumpend+1][:]
+    result=filled_result[jumpend-49:jumpend+1][:]'''
 
     result_text = ""
 
