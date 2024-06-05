@@ -19,6 +19,8 @@ from mmpose.apis import (inference_top_down_pose_model, init_pose_model,
                          process_mmdet_results, vis_pose_result)
 from mmpose.datasets import DatasetInfo
 
+from src.normalize import normalize_pose_landmarks
+
 try:
     from mmdet.apis import inference_detector, init_detector
     has_mmdet = True
@@ -26,6 +28,13 @@ except (ImportError, ModuleNotFoundError):
     has_mmdet = False
 
 assert has_mmdet, 'Please install mmdet to run the demo.'
+
+config = Config()
+det_model = init_detector(
+    config.det_config, config.det_checkpoint, device=config.device.lower())
+# build the pose model from a config file and a checkpoint file
+pose_model = init_pose_model(
+    config.pose_config, config.pose_checkpoint, device=config.device.lower())
 
 # how many frames to skip while inferencing
 # configuring a higher value will result in better FPS (frames per rate), but accuracy might get impacted
@@ -38,11 +47,7 @@ def analyse_video(lstm_classifiers, video_path, class_names):
     file_name = ntpath.basename(video_path)
     config = Config(video_path, 'res_{}'.format(file_name))
     print(f"Starting video processing: {video_path} saved as \"res_{file_name}\"")
-    det_model = init_detector(
-        config.det_config, config.det_checkpoint, device=config.device.lower())
-    # build the pose model from a config file and a checkpoint file
-    pose_model = init_pose_model(
-        config.pose_config, config.pose_checkpoint, device=config.device.lower())
+
 
     dataset = pose_model.cfg.data['test']['type']
     dataset_info = pose_model.cfg.data['test'].get('dataset_info', None)
@@ -155,14 +160,18 @@ def analyse_video(lstm_classifiers, video_path, class_names):
     result_text = ""
 
     for lstm_classifier, i in zip(lstm_classifiers, range(len(lstm_classifiers))):
-        
-        # convert input to tensor
-        model_input = torch.Tensor(np.array(result, dtype=np.float32))
-        # add extra dimension
+        # 1. normalize the pose landmarks
+        model_input = normalize_pose_landmarks(np.array(result, dtype=np.float32))
+        # 2. convert to numpy float array
+        model_input = model_input.astype(np.float32)
+        # 3. convert input to tensor
+        model_input = torch.Tensor(model_input)
+        # # 4. add extra dimension
         model_input = torch.unsqueeze(model_input, dim=0)
-        # predict the action class using lstm
+        # 5. predict the action class using lstm
         y_pred = lstm_classifier(model_input)
         prob = F.softmax(y_pred, dim=1)
+        print(f"prob: {prob.data}")
         # get the index of the max probability
         pred_index = prob.data.max(dim=1)[1]
         # pop the first value from buffer_window and add the new entry in FIFO fashion, to have a sliding window of size 32.

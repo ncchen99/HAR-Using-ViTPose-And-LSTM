@@ -70,7 +70,7 @@
         if (r.percentage == 100 && r.result != '') {
           source.close()
           $('#result').css("display", "block")
-          $('#result div').prepend('<img src="{{ url_for('get_result_video', filename=obj.video) }}" width="480" height="320"/>')
+          $('#result div').prepend('<img src="{{ url_for('get_result_video', filename=obj.video) }}" width="320"/>')
           $('#result div').prepend('<br/>')
           $('#result div').prepend('<a href="{{ url_for('get_analyzed_file', filename=obj.video) }}">Download Result File</a>')
 
@@ -98,6 +98,8 @@
       <div>
         <br>
         <span id="result-text"></span>
+        <br>
+        <br>
       </div>
 
     </div>
