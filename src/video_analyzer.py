@@ -183,10 +183,10 @@ def analyse_video(lstm_classifiers, video_path, class_names):
 
     result_text = ""
     
-    number_angle_list=convert_to_angle(number_list)
+    #number_angle_list=convert_to_angle(number_list)
     
     # 1. normalize the pose landmarks
-    model_input = normalize_pose_landmarks(np.array(number_angle_list, dtype=np.float32))
+    model_input = normalize_pose_landmarks(np.array(result, dtype=np.float32))
     # 2. convert to numpy float array
     model_input = model_input.astype(np.float32)
     # 3. convert input to tensor
