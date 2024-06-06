@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 def configuration_parser(parent_parser):
     parser = ArgumentParser(parents=[parent_parser], add_help=False)
-    parser.add_argument('--batch_size', type=int, default=10)
+    parser.add_argument('--batch_size', type=int, default=5)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--data_root', type=str, default=DATASET_PATH)
     parser.add_argument('--learning_rate', type=float, default=0.0001)
@@ -46,8 +46,9 @@ def do_training_validation(datapath):
         deterministic=True, 
         gpus=1, 
         progress_bar_refresh_rate=1, 
-        callbacks=[EarlyStopping(monitor='train_loss', patience=15), checkpoint_callback, lr_monitor])    
-    trainer.fit(model, data_module)    
+        callbacks=[EarlyStopping(monitor='train_loss', patience=18), checkpoint_callback, lr_monitor])    
+    trainer.fit(model, data_module) 
+    trainer.test()   
     return model
 
 """
@@ -84,10 +85,10 @@ def get_latest_run_version_ckpt_epoch_no(lightning_logs_dir='lightning_logs', ru
 
 for i in range(0, 7):
     datapath = {
-        "train_data": f"{DATASET_PATH}train/data_{i}.csv",
-        "train_info": f"{DATASET_PATH}train/info_{i}.csv",
-        "test_data": f"{DATASET_PATH}test/data_{i}.csv",
-        "test_info": f"{DATASET_PATH}test/info_{i}.csv",
+        "train_data": f"{DATASET_PATH}train_merged/{i}_data.csv",
+        "train_info": f"{DATASET_PATH}train_merged/{i}_info.csv",
+        "test_data": f"{DATASET_PATH}test_merged/{i}_data.csv",
+        "test_info": f"{DATASET_PATH}test_merged/{i}_info.csv",
     }
     do_training_validation(datapath)
     ckpt_path = get_latest_run_version_ckpt_epoch_no()

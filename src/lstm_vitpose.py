@@ -143,6 +143,15 @@ class PoseDataModule(pl.LightningDataModule):
             collate_fn=self.collate_fn
         )
         return val_loader
+
+    def test_dataloader(self):
+        test_loader = DataLoader(
+            self.val_dataset,  # 假设测试数据集已经被相同的方法处理并加载
+            batch_size=self.batch_size,
+            shuffle=False,  # 测试集通常不需要打乱
+            collate_fn=self.collate_fn
+        )
+        return test_loader
     
     def __getattribute__(self, name: np.str):
         return super().__getattribute__(name)
@@ -245,6 +254,26 @@ class ActionClassificationLSTM(pl.LightningModule):
         # log the metrics for pytorch lightning progress bar and any further processing
         self.log('val_loss', avg_val_loss, prog_bar=True)
         self.log('val_acc', avg_val_acc, prog_bar=True)
+        
+    def test_step(self, batch, batch_idx):
+        x, y, x_lens = batch
+        x = torch.nn.utils.rnn.pack_padded_sequence(x, x_lens, batch_first=True, enforce_sorted=False)
+        y_pred = self(x)
+        loss = F.cross_entropy(y_pred, y)
+        prob = F.softmax(y_pred, dim=1)
+        pred = prob.data.max(1)[1]
+        acc = torchmetrics.functional.accuracy(pred, y)
+        self.log('test_loss', loss, prog_bar=True)
+        self.log('test_acc', acc, prog_bar=True)
+        return {'test_loss': loss, 'test_acc': acc}
+
+    def test_epoch_end(self, outputs):
+        avg_test_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
+        avg_test_acc = torch.stack([x['test_acc'] for x in outputs]).mean()
+        self.log('avg_test_loss', avg_test_loss, prog_bar=True)
+        self.log('avg_test_acc', avg_test_acc, prog_bar=True)
+
+    
         
     def configure_optimizers(self):
         # adam optimiser
