@@ -5,16 +5,20 @@
   <title>Action Classification using detectron and LSTM</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="static/css/bootstrap.min.css">
+  <script src="static/js/jquery.min.js"></script>
+  <script src="static/js/popper.min.js"></script>
+  <script src="static/js/bootstrap.min.js"></script>
+  <script src="static/js/Chart.js"></script>
   <style>
     video {
       width: 320px;
       object-fit: fill;
     }
 
+    .hidden {
+      display: none;
+    }
     .bg-1 {
       background-color: #FEF5E7;
       /* Green */
@@ -73,7 +77,27 @@
           $('#result div').prepend('<img src="{{ url_for('get_result_video', filename=obj.video) }}" width="320"/>')
           $('#result div').prepend('<br/>')
           $('#result div').prepend('<a href="{{ url_for('get_analyzed_file', filename=obj.video) }}">Download Result File</a>')
+          $('#chart').removeClass('hidden')
 
+          const xValues = ["蹲太低", "身體過度前傾", "擺手太低", "向後方起跳", "起跳不完全", "向後甩頭", "團身不緊"];
+          const yValues = r.result_values;
+          const barColors = ["red", "green","blue","orange","brown","purple","pink"];
+
+          new Chart("myChart", {
+            type: "bar",
+            data: {
+              labels: xValues,
+              datasets: [{
+                backgroundColor: barColors,
+                data: yValues
+              }]
+            },
+            options: {legend: {display: false},
+            title: {
+              display: true,
+              text: "錯誤的動作分析結果"
+            }}
+          });
         }
       }
     </script>
@@ -101,7 +125,11 @@
         <br>
         <br>
       </div>
-
+      <div class="hidden" id="chart">
+          <canvas id="myChart" style="width:100%;max-width:700px"></canvas>
+          <br>
+          <br>
+      </div>
     </div>
     {% else %}
     <div class="row">

@@ -33,12 +33,15 @@ def find_inflection(ankle_list) :
                 max_length = length
                 start_index = inflection_points[i - 1]
                 middle_index = inflection_points[i]
-                end_index = inflection_points[i+1]
+                if(i+1<len(inflection_points)):
+                    end_index = inflection_points[i+1]
+                else :
+                    end_index=len(ankle_list)
 
     # 绘制图形（可选）
     
     print(f'Start index: {start_index}, Mid index: {middle_index},end index: {end_index}, Length: {max_length}')
-    return end_index
+    return start_index,end_index
 
 
 

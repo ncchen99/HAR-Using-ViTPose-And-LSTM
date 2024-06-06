@@ -1,13 +1,16 @@
+import json
 import os
 import time
 import cv2
 import ntpath
 
 
+
 from lib.config import Config
 from lib.tools import verify_video, convert_video, get_video_info
 import src.colab_find_bounce_up as colab_find_bounce_up
 import src.algo as algo
+import src.convert_to_angle as convert_to_angle
 
 import numpy as np
 from pathlib import Path
@@ -87,6 +90,7 @@ def analyse_video(lstm_classifiers, video_path, class_names):
     frame_index = 0
     tot_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     result = []
+    frame_list=[]
     
     start = time.time()
     
@@ -140,38 +144,64 @@ def analyse_video(lstm_classifiers, video_path, class_names):
         result.append(coordinates)
 
         if save_out_video:
-            videoWriter.write(vis_img)
+            #videoWriter.write(vis_img)
+            frame_list.append(vis_img)
             
         percentage = int(frame_index*100/tot_frames)
         yield f"data: {{ \"percentage\":\"{str(percentage)}\", \"result\": \"\" }} \n\n"
 
     cap.release()
 
-    if save_out_video:
-        videoWriter.release()
+    #if save_out_video:
+    #    videoWriter.release()
 
     analyze_done = time.time()
     print("Video processing finished in ", analyze_done - start)
     
-    '''filled_result=colab_find_bounce_up.fill_ankle(result[33])
-    jumpend=algo.find_inflection(filled_result)
-    result=filled_result[jumpend-49:jumpend+1][:]'''
+    if len(result)>=60:
+        number_list = []
+        column = [row[33] for row in result]
+        for string_num in column:
+            number_list.append(float(string_num if string_num else 0))
+            
+        filled_result=colab_find_bounce_up.fill_ankle(number_list)
+        jumpstart,jumpend=algo.find_inflection(filled_result)
+        if(jumpend>50 and jumpstart>=15):
+            result=result[jumpstart-15:jumpend+1][:]
+            frame_list=frame_list[jumpstart-15:jumpend+1][:]
+            number_list=number_list[jumpstart-15:jumpend+1][:]
+        else :
+            result=result[:jumpend+1][:]
+            frame_list=frame_list[:jumpend+1][:]
+            number_list=number_list[:jumpend+1][:]
+        print(f"start frame={jumpstart-15}")
+        print(f"end frame={jumpend}")
+    for video_frame in frame_list:
+        videoWriter.write(video_frame)
+    if save_out_video:
+        videoWriter.release()
 
     result_text = ""
+    
+    number_angle_list=convert_to_angle(number_list)
+    
+    # 1. normalize the pose landmarks
+    model_input = normalize_pose_landmarks(np.array(number_angle_list, dtype=np.float32))
+    # 2. convert to numpy float array
+    model_input = model_input.astype(np.float32)
+    # 3. convert input to tensor
+    model_input = torch.Tensor(model_input)
+    # # 4. add extra dimension
+    model_input = torch.unsqueeze(model_input, dim=0)
+
+    result_values = []
 
     for lstm_classifier, i in zip(lstm_classifiers, range(len(lstm_classifiers))):
-        # 1. normalize the pose landmarks
-        model_input = normalize_pose_landmarks(np.array(result, dtype=np.float32))
-        # 2. convert to numpy float array
-        model_input = model_input.astype(np.float32)
-        # 3. convert input to tensor
-        model_input = torch.Tensor(model_input)
-        # # 4. add extra dimension
-        model_input = torch.unsqueeze(model_input, dim=0)
         # 5. predict the action class using lstm
         y_pred = lstm_classifier(model_input)
         prob = F.softmax(y_pred, dim=1)
-        print(f"prob: {prob.data}")
+        result_values.append(float(prob.data.numpy()[0][1]) - 0.5)
+        print(f"prob: {prob.data.numpy()[0]}")
         # get the index of the max probability
         pred_index = prob.data.max(dim=1)[1]
         # pop the first value from buffer_window and add the new entry in FIFO fashion, to have a sliding window of size 32.
@@ -179,7 +209,9 @@ def analyse_video(lstm_classifiers, video_path, class_names):
         if pred_index.numpy()[0] == 1:
             result_text += class_names[i] + " "
     
-    yield f"data: {{ \"percentage\":\"100\", \"result\": \"{result_text if result_text != '' else '做的很好！'}\"}}\n\n"
+    r = {"percentage": "100", 'result': result_text if result_text != '' else '做的很好！', "result_values": result_values}
+    print(r)
+    yield f"data: {json.dumps(r)}\n\n"
 
 
 
