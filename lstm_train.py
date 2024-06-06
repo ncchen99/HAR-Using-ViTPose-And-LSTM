@@ -87,10 +87,10 @@ def get_latest_run_version_ckpt_epoch_no(lightning_logs_dir='lightning_logs', ru
 
 for i in range(0, 7):
     datapath = {
-        "train_data": f"{DATASET_PATH}train/data_{i}.csv",
-        "train_info": f"{DATASET_PATH}train/info_{i}.csv",
-        "test_data": f"{DATASET_PATH}test/data_{i}.csv",
-        "test_info": f"{DATASET_PATH}test/info_{i}.csv",
+        "train_data": f"{DATASET_PATH}train_merged_angle/{i}.csv",
+        "train_info": f"{DATASET_PATH}train_merged_angle/{i}_info.csv",
+        "test_data": f"{DATASET_PATH}test_merged_angle/{i}.csv",
+        "test_info": f"{DATASET_PATH}test_merged_angle/{i}_info.csv",
     }
     do_training_validation(datapath)
     ckpt_path = get_latest_run_version_ckpt_epoch_no()
