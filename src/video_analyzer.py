@@ -3,7 +3,7 @@ import os
 import time
 import cv2
 import ntpath
-
+import tempfile
 
 
 from lib.config import Config
@@ -44,7 +44,7 @@ pose_model = init_pose_model(
 SKIP_FRAME_COUNT = 0
 
 # analyse the video
-def analyse_video(lstm_classifiers, video_path, class_names):
+def analyse_video(lstm_classifiers, video_path, class_names_and_priorities):
     
     #print("Label detected ", label)
     file_name = ntpath.basename(video_path)
@@ -64,7 +64,25 @@ def analyse_video(lstm_classifiers, video_path, class_names):
 
     ###############################
         
-    cap = cv2.VideoCapture(config.video_path)
+
+    start = time.time()
+
+
+    message = {"percentage": "0", 'result': 'converting video...', "result_values": []}
+    yield f"data: {json.dumps(message)}\n\n"
+
+    # Verify if the video is valid
+    if not verify_video(video_path):
+        message = {"percentage": "100", 'result': 'Invalid video file', "result_values": []}
+        yield f"data: {json.dumps(message)}\n\n"
+    
+    # Convert the video FPS 30
+    tmp = tempfile.NamedTemporaryFile(suffix='.mp4')
+    convert_video(video_path, tmp.name, 30)
+    
+    # video_info = get_video_info(tmp.name)
+
+    cap = cv2.VideoCapture(tmp.name)
     # assert cap.isOpened(), f'Faild to load video file {config.video_path}'
 
     if config.out_video_path == '':
@@ -92,7 +110,6 @@ def analyse_video(lstm_classifiers, video_path, class_names):
     result = []
     frame_list=[]
     
-    start = time.time()
     
     while (cap.isOpened()):
         flag, img = cap.read()
@@ -181,7 +198,7 @@ def analyse_video(lstm_classifiers, video_path, class_names):
     if save_out_video:
         videoWriter.release()
 
-    result_text = ""
+    
     
     #number_angle_list=convert_to_angle(number_list)
     
@@ -194,8 +211,8 @@ def analyse_video(lstm_classifiers, video_path, class_names):
     # # 4. add extra dimension
     model_input = torch.unsqueeze(model_input, dim=0)
 
+    result_classes= []
     result_values = []
-
     for lstm_classifier, i in zip(lstm_classifiers, range(len(lstm_classifiers))):
         # 5. predict the action class using lstm
         y_pred = lstm_classifier(model_input)
@@ -206,12 +223,11 @@ def analyse_video(lstm_classifiers, video_path, class_names):
         pred_index = prob.data.max(dim=1)[1]
         # pop the first value from buffer_window and add the new entry in FIFO fashion, to have a sliding window of size 32.
         print(f"class {i} pred_index : {pred_index.numpy()[0]}")
-        if pred_index.numpy()[0] == 1:
-            result_text += class_names[i] + " "
-    
-    r = {"percentage": "100", 'result': result_text if result_text != '' else '做的很好！', "result_values": result_values}
-    print(r)
-    yield f"data: {json.dumps(r)}\n\n"
+        result_classes.append(class_names_and_priorities["class_names"][i] if pred_index.numpy()[0] == 1 else "")
+    result_classes = [val for (_, val) in sorted(zip(class_names_and_priorities["priorities"], result_classes), key=lambda x: x[0]) if val != '']
+    result_text = ', '.join(result_classes)
+    message = {"percentage": "100", 'result': result_text if result_text != '' else '做的很好！', "result_values": result_values}
+    yield f"data: {json.dumps(message)}\n\n"
 
 
 

@@ -28,9 +28,10 @@ checkpoint_paths = [
     "models/6.ckpt"
 ]
 
-class_names = [
-    "蹲太低", "身體太過前傾", "擺手太低", "向後跳", "起跳不完全", "你向後甩頭了", "團身不夠緊"
-]
+class_names_and_priorities = {
+    "class_names": ["蹲太低", "身體太過前傾", "擺手太低", "向後跳", "起跳不完全", "你向後甩頭了", "團身不夠緊"],
+    "priorities": [6, 7, 4, 1, 5, 3, 2]
+}
 
 # Load pretrained LSTM model from checkpoint file
 lstm_classifiers = [ActionClassificationLSTM.load_from_checkpoint(checkpoint_path) for checkpoint_path in checkpoint_paths]
@@ -121,7 +122,7 @@ def get_result_video(filename):
 @app.route('/analyze/<filename>')
 def analyze(filename):
     # invokes method analyse_video
-    return Response(analyse_video(lstm_classifiers, filename, class_names), mimetype='text/event-stream')
+    return Response(analyse_video(lstm_classifiers, filename, class_names_and_priorities), mimetype='text/event-stream')
 
 
 if __name__ == '__main__':
